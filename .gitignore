@@ -1,4 +1,10 @@
 log/*
 
-*.swp
-*.pyc
+# swap
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
