@@ -62,6 +62,7 @@ class MapResolver(client.Resolver):
         client.Resolver.__init__(self, servers=servers)
 
     def query(self, query, timeout = None, addr = None, edns = None):
+        logger.info("[MapResolver] Check query type: [%s] and query name: [%s]" % (query.type, query.name))
         try:
             if typeToMethod[query.type] in smartType:
                 return self.typeToMethod[query.type](str(query.name), timeout, addr, edns)
@@ -78,14 +79,14 @@ class MapResolver(client.Resolver):
                 add = []
                 for x in value:
                     ret.append(dns.RRHeader(name, dns.A, dns.IN, ttl, dns.Record_A(x, ttl), True))
-                
+
                 if edns is not None:
                     if edns.rdlength > 8:
                         add.append(dns.RRHeader('', dns.EDNS, 4096, edns.ttl, edns.payload, True))
-                    else: 
+                    else:
                         add.append(dns.RRHeader('', dns.EDNS, 4096, 0, dns.Record_EDNS(None, 0), True))
                 return [ret, (), add]
-            
+
             result = self.Finder.FindIP(str(addr[0]), name)
             #返回的IP数组乱序
             random.shuffle(result)
@@ -115,11 +116,11 @@ class MapResolver(client.Resolver):
                 if edns is not None:
                     if edns.rdlength > 8:
                         add.append(dns.RRHeader('', dns.EDNS, 4096, edns.ttl, edns.payload, True))
-                    else: 
+                    else:
                         add.append(dns.RRHeader('', dns.EDNS, 4096, 0, dns.Record_EDNS(None, 0), True))
-                
-                return [(dns.RRHeader(name, dns.SOA, dns.IN, value['ttl'], dns.Record_SOA(value['record'], value['email'], value['serial'], value['refresh'], value['retry'], value['expire'], value['ttl']), True),), 
-                    (), 
+
+                return [(dns.RRHeader(name, dns.SOA, dns.IN, value['ttl'], dns.Record_SOA(value['record'], value['email'], value['serial'], value['refresh'], value['retry'], value['expire'], value['ttl']), True),),
+                    (),
                     add
                 ]
             ret = packResultSOA(result)
@@ -133,7 +134,7 @@ class MapResolver(client.Resolver):
         return [(),(),()]
 
 class SmartResolverChain(resolve.ResolverChain):
-    
+
     def __init__(self, resolvers):
         #resolve.ResolverChain.__init__(self, resolvers)
         common.ResolverBase.__init__(self)
@@ -166,12 +167,13 @@ class SmartResolverChain(resolve.ResolverChain):
 
     def lookupIPV6Address(self, name, timeout = None, addr = None, edns = None):
         return self._lookup(name, dns.IN, dns.AAAA, timeout, addr, edns)
-  
+
     def lookupNameservers(self, name, timeout = None, addr = None, edns = None):
         return self._lookup(name, dns.IN, dns.NS, timeout, addr, edns)
 
 class SmartDNSFactory(server.DNSServerFactory):
     def handleQuery(self, message, protocol, address):
+        logger.info("[SmartDNSFactory] %s" % message.queries[0]);
         #if len(message.additional) > 0:
         #    print inspect.getmembers(message.additional[0]
         # 可以支持多个query
@@ -186,14 +188,14 @@ class SmartDNSFactory(server.DNSServerFactory):
                     and message.additional[0].rdlength > 8:
                 cliAddr = (message.additional[0].payload.dottedQuad(), 0)
                 edns = message.additional[0]
-        logger.info("[type: %s]\t[protocol: %s]\t[query: %s]\t[address: %s]\t[dns_server_addr: %s]\t[additional: %s]" % \
-            (typeToMethod[query.type], type(protocol), query, cliAddr[0], address[0], edns))
+        logger.info("[type: %s]\t[protocol: %s]\t[query: %s]\t[address: %s]\t[dns_server_addr: %s]\t[additional: %s]" % (typeToMethod[query.type], type(protocol), query, cliAddr[0], address[0], edns))
+
         return self.resolver.query(query, addr = cliAddr, edns = edns).addCallback(
                 self.gotResolverResponse, protocol, message, address
             ).addErrback(
                 self.gotResolverError, protocol, message, address
             )
-    
+
     def __init__(self, authorities = None, caches = None, clients = None, verbose = 0):
         resolvers = []
         if authorities is not None:
@@ -209,4 +211,3 @@ class SmartDNSFactory(server.DNSServerFactory):
         if caches:
             self.cache = caches[-1]
         self.connections = []
-
