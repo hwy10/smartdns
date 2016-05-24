@@ -1,4 +1,4 @@
-log/*
+log/*.log
 
 # swap
 [._]*.s[a-w][a-z]
