@@ -55,6 +55,7 @@ class FailureHandler:
 
 class MapResolver(client.Resolver):
     def __init__(self, Finder, Amapping, NSmapping, SOAmapping, servers):
+        logger.info("[MapResolver] Init.");
         self.Finder = Finder
         self.Amapping = Amapping
         self.NSmapping = NSmapping
@@ -72,8 +73,11 @@ class MapResolver(client.Resolver):
             return defer.fail(failure.Failure(NotImplementedError(str(self.__class__) + " " + str(query.type))))
 
     def lookupAddress(self, name, timeout = None, addr = None, edns = None):
+        logger.info("[MapResolver] Lookup address name: [%s]" % (name))
         if name in self.Amapping:
+            logger.info("[MapResolver] Lookup address name, found in Amapping: [%s]" % (self.Amapping[name]))
             ttl = self.Amapping[name]['ttl']
+            # construct result
             def packResult( value ):
                 ret = []
                 add = []
@@ -92,10 +96,13 @@ class MapResolver(client.Resolver):
             random.shuffle(result)
             return packResult(result)
         else:
+            logger.info("[MapResolver] Lookup address name, not found in Amapping.")
             return self._lookup(name, dns.IN, dns.A, timeout)
 
     def lookupNameservers(self, name, timeout=None):
+        logger.info("[MapResolver] Lookup name server: [%s]" % (name))
         if name in self.NSmapping:
+            logger.info("[MapResolver] Lookup name server, found in NSmapping: [%s]" % (self.NSmapping[name]))
             result = self.NSmapping[name]
             ttl = result['ttl']
             record = re.split(ur',|\s+', result['record'])
@@ -106,10 +113,13 @@ class MapResolver(client.Resolver):
                 return [ret, (), ()]
             return packResultNS(record)
         else:
+            logger.info("[MapResolver] Lookup name server, not found in NSmapping")
             return self._lookup(name, dns.IN, dns.NS, timeout)
 
     def lookupAuthority(self, name, timeout=None, addr = None, edns = None):
+        logger.info("[MapResolver] Lookup authority: [%s]" % (name))
         if name in self.SOAmapping:
+            logger.info("[MapResolver] Lookup authority, found in SOAmapping: [%s]" % (self.SOAmapping[name]))
             result = self.SOAmapping[name]
             add = []
             def packResultSOA(value):
@@ -128,19 +138,27 @@ class MapResolver(client.Resolver):
                 (name, result, add))
             return ret
         else:
+            logger.info("[MapResolver] Lookup authority, not found in SOAmapping.")
             return self._lookup(name, dns.IN, dns.SOA, timeout)
 
     def lookupIPV6Address(self, name, timeout = None, addr = None):
+        logger.info("[MapResolver] Lookup IPV6 address, not implemented yet.")
         return [(),(),()]
+
+    def lookupCanonicalName(self, name, timeout = None, addr = None):
+        logger.info("[MapResolver] Lookup Canonical name, not implemented yet.")
+        return [(), (), ()]
 
 class SmartResolverChain(resolve.ResolverChain):
 
     def __init__(self, resolvers):
+        logger.info("[SmartResolverChain] Init.")
         #resolve.ResolverChain.__init__(self, resolvers)
         common.ResolverBase.__init__(self)
         self.resolvers = resolvers
 
     def _lookup(self, name, cls, type, timeout, addr = None, edns = None):
+        logger.info("[SmartResolverChain] _lookup with name: [%s], cls: [%s], type: [%s], timeout: [%s]" % (name, cls, type, timeout))
         q = dns.Query(name, type, cls)
         #d = self.resolvers[0].query(q, timeout)
         d = defer.fail(failure.Failure(dns.DomainError(name)))
@@ -151,6 +169,7 @@ class SmartResolverChain(resolve.ResolverChain):
         return d
 
     def query(self, query, timeout = None, addr = None, edns = None):
+        logger.info("[SmartResolverChain] query with query: [%s]" % (query))
         try:
             if typeToMethod[query.type] in smartType:
                 return self.typeToMethod[query.type](str(query.name), timeout, addr, edns)
@@ -173,7 +192,7 @@ class SmartResolverChain(resolve.ResolverChain):
 
 class SmartDNSFactory(server.DNSServerFactory):
     def handleQuery(self, message, protocol, address):
-        logger.info("[SmartDNSFactory] %s" % message.queries[0]);
+        logger.info("[SmartDNSFactory] handleQuery with message: [%s], protocol: [%s] and address: [%s] %s" % (message.queries[0], protocol, address));
         #if len(message.additional) > 0:
         #    print inspect.getmembers(message.additional[0]
         # 可以支持多个query
@@ -197,6 +216,7 @@ class SmartDNSFactory(server.DNSServerFactory):
             )
 
     def __init__(self, authorities = None, caches = None, clients = None, verbose = 0):
+        logger.info("[SmartDNSFactory] Init.")
         resolvers = []
         if authorities is not None:
             resolvers.extend(authorities)
