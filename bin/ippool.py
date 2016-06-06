@@ -177,7 +177,7 @@ class IPPool:
 				print "[domain:%s   ip: %s]" % (i, self.iphash[key][6][i][0])
 
 	def SearchLocation(self, ip):
-		logger.info("[IPPool] SearchLocation with ip: [%s]." %s (ip));
+		logger.info("[IPPool] SearchLocation with ip: [%s]." % (ip));
 		ipnum = ip2long(ip)
 		ip_point = bisect.bisect_right(self.iplist, ipnum)
 		i = self.iplist[ip_point - 1]
@@ -189,7 +189,7 @@ class IPPool:
 		return i, j, ipnum
 
 	def FindIP(self, ip, name):
-		logger.info("[IPPool] FindIP with ip: [%s] and name: [%s]." %s (ip, name));
+		logger.info("[IPPool] FindIP with ip: [%s] and name: [%s]." % (ip, name));
 		i, j, ipnum = self.SearchLocation(ip)
 
 		if i in self.iphash:
