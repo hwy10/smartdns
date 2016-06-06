@@ -192,7 +192,7 @@ class SmartResolverChain(resolve.ResolverChain):
 
 class SmartDNSFactory(server.DNSServerFactory):
     def handleQuery(self, message, protocol, address):
-        logger.info("[SmartDNSFactory] handleQuery with message: [%s], protocol: [%s] and address: [%s] %s" % (message.queries[0], protocol, address));
+        logger.info("[SmartDNSFactory] handleQuery with message: [%s], protocol: [%s] and address: [%s]" % (message.queries[0], protocol, address));
         #if len(message.additional) > 0:
         #    print inspect.getmembers(message.additional[0]
         # 可以支持多个query
