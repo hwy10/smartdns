@@ -91,7 +91,8 @@ class MapResolver(client.Resolver):
                         add.append(dns.RRHeader('', dns.EDNS, 4096, 0, dns.Record_EDNS(None, 0), True))
                 return [ret, (), add]
 
-            result = self.Finder.FindIP(str(addr[0]), name)
+            result = self.Finder.FindIP2(str(addr[0]), name)
+            logger.info("[MapResolver] Found ip:[%s] and its information: [%s]" % (str(addr[0]), result))
             #返回的IP数组乱序
             random.shuffle(result)
             return packResult(result)

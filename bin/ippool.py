@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys, os
+import requests
 from logger import logger
 import time
 import bisect
@@ -10,7 +11,6 @@ sys.path.append('../lib/')
 import yaml, re
 reload(sys)
 sys.setdefaultencoding('utf8')
-
 
 def ip2long(ip):
 	"convert decimal dotted quad string to long integer"
@@ -135,7 +135,6 @@ class IPPool:
 		#logger.warning(self.locmapip)
 
 	def JoinIP(self, ip):
-		logger.info("[IPPool] JoinIP.");
 		for fqdnk, fqdnv in self.locmapip.items():
 			l1 = []
 			l2 = []
@@ -172,9 +171,9 @@ class IPPool:
 	def ListIP(self):
 		logger.info("[IPPool] ListIP.");
 		for key in self.iphash:
-			print "ipstart: %s  ipend: %s  country: %s  province: %s  city: %s  sp: %s" % (key, self.iphash[key][1], self.iphash[key][2], self.iphash[key][3], self.iphash[key][4], self.iphash[key][5])
+			logger.info("ipstart: %s  ipend: %s  country: %s  province: %s  city: %s  sp: %s" % (key, self.iphash[key][1], self.iphash[key][2], self.iphash[key][3], self.iphash[key][4], self.iphash[key][5]))
 			for i in self.iphash[key][6]:
-				print "[domain:%s   ip: %s]" % (i, self.iphash[key][6][i][0])
+				logger.info("[domain:%s   ip: %s]" % (i, self.iphash[key][6][i][0]))
 
 	def SearchLocation(self, ip):
 		logger.info("[IPPool] SearchLocation with ip: [%s]." % (ip));
@@ -213,6 +212,16 @@ class IPPool:
 			ip_list = [ tmp_ip for tmp_ip in re.split(ur',|\s+',self.record[name]['default']) if not re.search(ur'[^0-9].', tmp_ip) ]
 			logger.warning("can't find ip in iphash, ip:[%s] domain:[%s] ip_list:%s" % (ip, name, ip_list))
 			return ip_list
+
+	def FindIP2(self, ip, name):
+		logger.info("[IPPool] FindIP2 with ip: [%s] and name: [%s]." % (ip, name))
+		response = requests.get("http://ipinfo.io/%s/json" % (ip))
+		if response.status_code == 200:
+			logger.info("[IPPool] FindIP2 found ip infomation: %s" % response.json())
+		else:
+			logger.error("[IPPool] Failed to find ip: [%s] from http://ipinfo.io." % ip)
+
+		return self.FindIP(ip, name)
 
 if __name__ == '__main__':
 	ipcheck = IPPool('../data/ip.csv', '../conf/a.yaml')

@@ -1,4 +1,7 @@
-log/*.log
+*.log
+
+# process id file
+*.pid
 
 # swap
 [._]*.s[a-w][a-z]
